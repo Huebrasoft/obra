@@ -2,7 +2,7 @@
 require_once __DIR__ . '/BaseModel.php';
 
 class Proyecto extends BaseModel {
-    public function activos(): array {
+    public function activos() {
         $sql = "SELECT p.*, c.nombre AS cliente_nombre
                 FROM proyectos p
                 INNER JOIN clientes c ON c.id = p.cliente_id
@@ -11,14 +11,14 @@ class Proyecto extends BaseModel {
         return $this->db->query($sql)->fetchAll();
     }
 
-    public function allWithCliente(): array {
+    public function allWithCliente() {
         $sql = 'SELECT p.*, c.nombre AS cliente_nombre FROM proyectos p JOIN clientes c ON c.id = p.cliente_id WHERE p.deleted_at IS NULL ORDER BY p.id DESC';
         return $this->db->query($sql)->fetchAll();
     }
 
-    public function find(int $id): ?array {
+    public function find($id) {
         $stmt = $this->db->prepare('SELECT p.*, c.nombre cliente_nombre FROM proyectos p JOIN clientes c ON c.id=p.cliente_id WHERE p.id=? AND p.deleted_at IS NULL');
-        $stmt->execute([$id]);
+        $stmt->execute(array($id));
         return $stmt->fetch() ?: null;
     }
 }

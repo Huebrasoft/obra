@@ -40,3 +40,10 @@ Aplicación web simple para control de tiempo, materiales y costes por proyecto 
 ## Nota seguridad
 
 Se usan `prepared statements`, validaciones básicas frontend/backend y soft delete en tablas principales.
+
+## Solución rápida si sale HTTP 500 en login
+
+- Verifica versión de PHP (recomendado 8.1+).
+- Activa extensiones `pdo` y `pdo_mysql`.
+- Revisa el log de errores de PHP del hosting.
+- Vuelve a importar `sql/schema.sql` para cargar hashes válidos de usuarios demo.

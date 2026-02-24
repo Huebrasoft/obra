@@ -81,8 +81,14 @@ class ParteDiario extends BaseModel {
         $stmt->execute([$proyectoId]);
         $resumen['maquinaria'] = $stmt->fetchAll();
 
-        $costeMateriales = array_sum(array_map(fn($m) => (float)$m['coste'], $resumen['materiales']));
-        $costeMaquinaria = array_sum(array_map(fn($m) => (float)$m['coste'], $resumen['maquinaria']));
+        $costeMateriales = 0;
+        foreach ($resumen['materiales'] as $m) {
+            $costeMateriales += (float)$m['coste'];
+        }
+        $costeMaquinaria = 0;
+        foreach ($resumen['maquinaria'] as $m) {
+            $costeMaquinaria += (float)$m['coste'];
+        }
         $costeManoObra = (float)($resumen['mano_obra']['coste'] ?? 0);
 
         $resumen['totales'] = [

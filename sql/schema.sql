@@ -132,8 +132,8 @@ CREATE TABLE parte_maquinaria (
 
 -- Datos base mínimos
 INSERT INTO usuarios (nombre, username, password_hash, rol) VALUES
-('Admin', 'admin', '$2y$10$QfXqF2lA3xKlFKd2kxXtX.RV3gljEmM4x4dL2E2wFfUEX6F44Pq2K', 'administrador'),
-('Operario Demo', 'operario', '$2y$10$fxNMcYfQ8QHUBYj42zx4ouql6JROn8fS8dD0fIkHkyl4u0x9IIByW', 'operario');
+('Admin', 'admin', '$2y$12$xUHWZ4cCd9K7UxariHax0O220xP3j9OOP5g5EcmC8GvGTB/cTKmNy', 'administrador'),
+('Operario Demo', 'operario', '$2y$12$Qr3cFLNPMFEbWffYDjk5nOesOcSLlHnmZrxebd6koiDfPmUi8OvY6', 'operario');
 
 INSERT INTO clientes (nombre, telefono, email, cif_nif, notas) VALUES
 ('Construcciones Norte SL', '600000001', 'info@norte.es', 'B12345678', 'Cliente prioritario');
