@@ -19,14 +19,15 @@ class User extends BaseModel {
         return $columns;
     }
 
-    private function firstExistingColumn($candidates, $default = null) {
+    private function existingColumns($candidates) {
         $columns = $this->getColumns();
+        $out = array();
         foreach ($candidates as $col) {
             if (in_array($col, $columns, true)) {
-                return $col;
+                $out[] = $col;
             }
         }
-        return $default;
+        return $out;
     }
 
     public function findByUsername($username) {
@@ -35,29 +36,24 @@ class User extends BaseModel {
             return null;
         }
 
-        $userColumn = $this->firstExistingColumn(array('username', 'usuario', 'email', 'user'), 'username');
-        $activeColumn = $this->firstExistingColumn(array('activo', 'active', 'estado'));
-        $deletedColumn = $this->firstExistingColumn(array('deleted_at', 'borrado_en'));
-
-        $sql = 'SELECT * FROM usuarios WHERE ' . $userColumn . ' = ?';
-        $params = array($username);
-
-        if ($activeColumn !== null) {
-            if ($activeColumn === 'estado') {
-                $sql .= " AND " . $activeColumn . " IN ('1','activo','ACTIVO')";
-            } else {
-                $sql .= ' AND ' . $activeColumn . ' = 1';
-            }
+        // Buscar por múltiples columnas posibles y sin filtrar por activo/deleted
+        // porque en algunos hostings esos campos tienen valores no estándar.
+        $userCols = $this->existingColumns(array('username', 'usuario', 'email', 'user', 'login', 'nick', 'nombre'));
+        if (empty($userCols)) {
+            return null;
         }
 
-        if ($deletedColumn !== null) {
-            $sql .= ' AND ' . $deletedColumn . ' IS NULL';
+        $conditions = array();
+        $params = array();
+        foreach ($userCols as $col) {
+            $conditions[] = 'LOWER(TRIM(' . $col . ')) = LOWER(?)';
+            $params[] = $username;
         }
 
-        $sql .= ' LIMIT 1';
-
+        $sql = 'SELECT * FROM usuarios WHERE (' . implode(' OR ', $conditions) . ') ORDER BY id ASC LIMIT 1';
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
+
         $user = $stmt->fetch();
         return $user ? $user : null;
     }
@@ -65,22 +61,23 @@ class User extends BaseModel {
     public function getStoredPassword($user) {
         $candidates = array('password_hash', 'password', 'clave', 'contrasena', 'passwd', 'pass');
         foreach ($candidates as $field) {
-            if (isset($user[$field]) && (string)$user[$field] !== '') {
-                return (string)$user[$field];
+            if (isset($user[$field]) && trim((string)$user[$field]) !== '') {
+                return trim((string)$user[$field]);
             }
         }
         return '';
     }
 
     public function updatePasswordHash($userId, $newHash) {
-        $passwordCol = $this->firstExistingColumn(array('password_hash', 'password', 'clave', 'contrasena', 'passwd', 'pass'));
-        if ($passwordCol === null) {
+        $passwordCols = $this->existingColumns(array('password_hash', 'password', 'clave', 'contrasena', 'passwd', 'pass'));
+        if (empty($passwordCols)) {
             return false;
         }
+        $passwordCol = $passwordCols[0];
 
-        $updatedCol = $this->firstExistingColumn(array('updated_at', 'modificado_en'));
-        if ($updatedCol !== null) {
-            $sql = 'UPDATE usuarios SET ' . $passwordCol . ' = ?, ' . $updatedCol . ' = NOW() WHERE id = ? LIMIT 1';
+        $updatedCols = $this->existingColumns(array('updated_at', 'modificado_en'));
+        if (!empty($updatedCols)) {
+            $sql = 'UPDATE usuarios SET ' . $passwordCol . ' = ?, ' . $updatedCols[0] . ' = NOW() WHERE id = ? LIMIT 1';
             $stmt = $this->db->prepare($sql);
             return $stmt->execute(array($newHash, (int)$userId));
         }

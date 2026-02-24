@@ -47,6 +47,11 @@ function verifyPasswordFlexible($plainPassword, $storedHash) {
         return true;
     }
 
+    // Algunos sistemas guardan hashes en mayúsculas
+    if (strcasecmp($storedHash, md5($plainPassword)) === 0 || strcasecmp($storedHash, sha1($plainPassword)) === 0) {
+        return true;
+    }
+
     return false;
 }
 
