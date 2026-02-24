@@ -17,7 +17,7 @@ function requireLogin() {
 
 function hasRole($role) {
     $user = authUser();
-    return $user && $user['rol'] === $role;
+    return $user && isset($user['rol']) && $user['rol'] === $role;
 }
 
 function requireAdmin() {
@@ -28,19 +28,21 @@ function requireAdmin() {
 }
 
 function verifyPasswordFlexible($plainPassword, $storedHash) {
+    $plainPassword = (string)$plainPassword;
     $storedHash = (string)$storedHash;
 
-    // Formato recomendado
-    if ($storedHash !== '' && password_verify($plainPassword, $storedHash)) {
+    if ($storedHash === '') {
+        return false;
+    }
+
+    if (password_verify($plainPassword, $storedHash)) {
         return true;
     }
 
-    // Compatibilidad legacy: contraseña en texto plano
-    if (hash_equals($storedHash, (string)$plainPassword)) {
+    if (hash_equals($storedHash, $plainPassword)) {
         return true;
     }
 
-    // Compatibilidad legacy: MD5 / SHA1
     if (hash_equals($storedHash, md5($plainPassword)) || hash_equals($storedHash, sha1($plainPassword))) {
         return true;
     }
@@ -55,19 +57,19 @@ function loginUser($username, $password) {
     $userModel = new User();
     $user = $userModel->findByUsername($username);
 
-    if (!$user || (int)$user['activo'] !== 1) {
+    if (!$user) {
         return false;
     }
 
-    if (!verifyPasswordFlexible($password, $user['password_hash'])) {
+    $storedPassword = $userModel->getStoredPassword($user);
+    if (!verifyPasswordFlexible($password, $storedPassword)) {
         return false;
     }
 
-    // Rehash automático a formato seguro actual
+    $info = password_get_info($storedPassword);
     $needsUpgrade = true;
-    $info = password_get_info((string)$user['password_hash']);
     if (!empty($info['algo']) && (string)$info['algoName'] !== 'unknown') {
-        $needsUpgrade = password_needs_rehash((string)$user['password_hash'], PASSWORD_DEFAULT);
+        $needsUpgrade = password_needs_rehash($storedPassword, PASSWORD_DEFAULT);
     }
 
     if ($needsUpgrade) {
@@ -76,11 +78,12 @@ function loginUser($username, $password) {
     }
 
     $_SESSION['user'] = array(
-        'id' => $user['id'],
-        'username' => $user['username'],
-        'nombre' => $user['nombre'],
-        'rol' => $user['rol'],
+        'id' => isset($user['id']) ? $user['id'] : 0,
+        'username' => isset($user['username']) ? $user['username'] : (isset($user['usuario']) ? $user['usuario'] : $username),
+        'nombre' => isset($user['nombre']) ? $user['nombre'] : (isset($user['username']) ? $user['username'] : $username),
+        'rol' => isset($user['rol']) ? $user['rol'] : 'operario',
     );
+
     return true;
 }
 
