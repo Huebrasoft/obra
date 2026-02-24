@@ -3,10 +3,11 @@
 const APP_NAME = 'Obra Control';
 const BASE_URL = '/';
 
-const DB_HOST = '127.0.0.1';
-const DB_NAME = 'obra_control';
-const DB_USER = 'root';
-const DB_PASS = '';
+// Datos de base de datos (hosting)
+const DB_HOST = 'localhost';
+const DB_NAME = 'huebraso_obra_control';
+const DB_USER = 'huebraso_administrador';
+const DB_PASS = 'Hector1990';
 const DB_CHARSET = 'utf8mb4';
 
 const APP_TIMEZONE = 'Europe/Madrid';
