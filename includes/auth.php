@@ -43,12 +43,21 @@ function verifyPasswordFlexible($plainPassword, $storedHash) {
         return true;
     }
 
-    if (hash_equals($storedHash, md5($plainPassword)) || hash_equals($storedHash, sha1($plainPassword))) {
+    $md5 = md5($plainPassword);
+    $sha1 = sha1($plainPassword);
+    $sha256 = hash('sha256', $plainPassword);
+
+    if (hash_equals($storedHash, $md5) || hash_equals($storedHash, $sha1) || hash_equals($storedHash, $sha256)) {
         return true;
     }
 
     // Algunos sistemas guardan hashes en mayúsculas
-    if (strcasecmp($storedHash, md5($plainPassword)) === 0 || strcasecmp($storedHash, sha1($plainPassword)) === 0) {
+    if (strcasecmp($storedHash, $md5) === 0 || strcasecmp($storedHash, $sha1) === 0 || strcasecmp($storedHash, $sha256) === 0) {
+        return true;
+    }
+
+    // Otros guardan hash en base64
+    if (hash_equals($storedHash, base64_encode(pack('H*', $md5))) || hash_equals($storedHash, base64_encode(pack('H*', $sha1)))) {
         return true;
     }
 
@@ -57,7 +66,7 @@ function verifyPasswordFlexible($plainPassword, $storedHash) {
 
 function loginUser($username, $password) {
     $username = trim((string)$username);
-    $password = (string)$password;
+    $password = trim((string)$password);
 
     $userModel = new User();
     $user = $userModel->findByUsername($username);
