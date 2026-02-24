@@ -27,20 +27,61 @@ function requireAdmin() {
     }
 }
 
+function verifyPasswordFlexible($plainPassword, $storedHash) {
+    $storedHash = (string)$storedHash;
+
+    // Formato recomendado
+    if ($storedHash !== '' && password_verify($plainPassword, $storedHash)) {
+        return true;
+    }
+
+    // Compatibilidad legacy: contraseña en texto plano
+    if (hash_equals($storedHash, (string)$plainPassword)) {
+        return true;
+    }
+
+    // Compatibilidad legacy: MD5 / SHA1
+    if (hash_equals($storedHash, md5($plainPassword)) || hash_equals($storedHash, sha1($plainPassword))) {
+        return true;
+    }
+
+    return false;
+}
+
 function loginUser($username, $password) {
+    $username = trim((string)$username);
+    $password = (string)$password;
+
     $userModel = new User();
     $user = $userModel->findByUsername($username);
 
-    if ($user && password_verify($password, $user['password_hash']) && (int)$user['activo'] === 1) {
-        $_SESSION['user'] = array(
-            'id' => $user['id'],
-            'username' => $user['username'],
-            'nombre' => $user['nombre'],
-            'rol' => $user['rol'],
-        );
-        return true;
+    if (!$user || (int)$user['activo'] !== 1) {
+        return false;
     }
-    return false;
+
+    if (!verifyPasswordFlexible($password, $user['password_hash'])) {
+        return false;
+    }
+
+    // Rehash automático a formato seguro actual
+    $needsUpgrade = true;
+    $info = password_get_info((string)$user['password_hash']);
+    if (!empty($info['algo']) && (string)$info['algoName'] !== 'unknown') {
+        $needsUpgrade = password_needs_rehash((string)$user['password_hash'], PASSWORD_DEFAULT);
+    }
+
+    if ($needsUpgrade) {
+        $newHash = password_hash($password, PASSWORD_DEFAULT);
+        $userModel->updatePasswordHash((int)$user['id'], $newHash);
+    }
+
+    $_SESSION['user'] = array(
+        'id' => $user['id'],
+        'username' => $user['username'],
+        'nombre' => $user['nombre'],
+        'rol' => $user['rol'],
+    );
+    return true;
 }
 
 function logoutUser() {
