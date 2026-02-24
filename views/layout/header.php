@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e(APP_NAME) ?></title>
-    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="<?= e(appUrl('assets/css/styles.css')) ?>">
 </head>
 <body>
 <header class="topbar">
@@ -13,16 +13,16 @@
     <?php if ($user): ?>
         <div class="user-info">
             <span><?= e($user['nombre']) ?> (<?= e($user['rol']) ?>)</span>
-            <a class="btn btn-sm" href="index.php?page=logout">Salir</a>
+            <a class="btn btn-sm" href="<?= e(appUrl('index.php?page=logout')) ?>">Salir</a>
         </div>
     <?php endif; ?>
 </header>
 <?php if ($user): ?>
 <nav class="nav">
-    <a href="index.php">Dashboard</a>
-    <a href="index.php?page=parte_nuevo">➕ Nuevo Parte Diario</a>
-    <a href="index.php?page=informe_trabajador">Informe trabajador</a>
-    <a href="index.php?page=informe_proyecto">Informe proyecto</a>
+    <a href="<?= e(appUrl('index.php')) ?>">Dashboard</a>
+    <a href="<?= e(appUrl('index.php?page=parte_nuevo')) ?>">➕ Nuevo Parte Diario</a>
+    <a href="<?= e(appUrl('index.php?page=informe_trabajador')) ?>">Informe trabajador</a>
+    <a href="<?= e(appUrl('index.php?page=informe_proyecto')) ?>">Informe proyecto</a>
 </nav>
 <?php endif; ?>
 <main class="container">

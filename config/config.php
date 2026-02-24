@@ -1,7 +1,7 @@
 <?php
 // Configuración principal
 const APP_NAME = 'Obra Control';
-const BASE_URL = '/';
+const BASE_URL = '/obras/';
 
 // Datos de base de datos (hosting)
 const DB_HOST = 'localhost';

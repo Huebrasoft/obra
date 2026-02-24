@@ -1,4 +1,7 @@
 </main>
-<script src="assets/js/main.js"></script>
+<script>
+window.APP_BASE_URL = <?= json_encode(baseUrl()) ?>;
+</script>
+<script src="<?= e(appUrl('assets/js/main.js')) ?>"></script>
 </body>
 </html>

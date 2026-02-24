@@ -11,7 +11,8 @@
         </select>
         <button class="btn">Ver</button>
         <?php if ($proyectoId > 0): ?>
-            <a class="btn btn-light" href="index.php?page=informe_proyecto&proyecto_id=<?= $proyectoId ?>&export=csv">CSV</a>
+            <?php $csvUrl = appUrl('index.php?page=informe_proyecto&proyecto_id=' . $proyectoId . '&export=csv'); ?>
+            <a class="btn btn-light" href="<?= e($csvUrl) ?>">CSV</a>
         <?php endif; ?>
     </form>
 

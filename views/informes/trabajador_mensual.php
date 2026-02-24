@@ -12,7 +12,8 @@
         <input type="month" name="mes" value="<?= e($mes) ?>" required>
         <button class="btn">Ver</button>
         <?php if ($trabajadorId > 0): ?>
-            <a class="btn btn-light" href="index.php?page=informe_trabajador&trabajador_id=<?= $trabajadorId ?>&mes=<?= e($mes) ?>&export=csv">CSV</a>
+            <?php $csvUrl = appUrl('index.php?page=informe_trabajador&trabajador_id=' . $trabajadorId . '&mes=' . urlencode($mes) . '&export=csv'); ?>
+            <a class="btn btn-light" href="<?= e($csvUrl) ?>">CSV</a>
         <?php endif; ?>
     </form>
 

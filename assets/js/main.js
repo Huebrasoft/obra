@@ -59,7 +59,8 @@
       return;
     }
 
-    const res = await fetch('index.php?page=parte_guardar_ajax', {
+    const endpoint = (window.APP_BASE_URL || '/') + 'index.php?page=parte_guardar_ajax';
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

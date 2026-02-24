@@ -1,29 +1,42 @@
 <?php
 
-function e(string $value): string {
-    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+function e($value) {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-function redirect(string $url): void {
-    header('Location: ' . $url);
+function baseUrl() {
+    return rtrim(BASE_URL, '/') . '/';
+}
+
+function appUrl($path = '') {
+    $path = ltrim((string)$path, '/');
+    return baseUrl() . $path;
+}
+
+function redirect($url) {
+    if (preg_match('/^https?:\/\//i', $url)) {
+        header('Location: ' . $url);
+    } else {
+        header('Location: ' . appUrl($url));
+    }
     exit;
 }
 
-function isPost(): bool {
+function isPost() {
     return ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 }
 
-function flash(string $type, string $message): void {
-    $_SESSION['flash'][] = ['type' => $type, 'message' => $message];
+function flash($type, $message) {
+    $_SESSION['flash'][] = array('type' => $type, 'message' => $message);
 }
 
-function getFlashes(): array {
-    $messages = $_SESSION['flash'] ?? [];
+function getFlashes() {
+    $messages = isset($_SESSION['flash']) ? $_SESSION['flash'] : array();
     unset($_SESSION['flash']);
     return $messages;
 }
 
-function csvOutput(string $filename, array $headers, array $rows): void {
+function csvOutput($filename, $headers, $rows) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
 

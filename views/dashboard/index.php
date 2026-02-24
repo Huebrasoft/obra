@@ -2,7 +2,7 @@
 <section class="grid-2">
     <article class="card">
         <h2>Acciones rápidas</h2>
-        <a class="btn btn-big" href="index.php?page=parte_nuevo">➕ Nuevo Parte Diario</a>
+        <a class="btn btn-big" href="<?= e(appUrl('index.php?page=parte_nuevo')) ?>">➕ Nuevo Parte Diario</a>
     </article>
     <article class="card">
         <h2>Proyectos activos</h2>
