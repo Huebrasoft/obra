@@ -10,66 +10,75 @@
   const rowsMat = document.getElementById('rowsMateriales');
   const rowsMaq = document.getElementById('rowsMaquinaria');
 
-  function options(items, valueKey, textKey, extraTextKey) {
+  function options(items, valueKey, textKey, suffixKey) {
     return (items || []).map((x) => {
-      const extra = extraTextKey ? ` (${x[extraTextKey] ?? 0})` : '';
-      return `<option value="${x[valueKey]}">${x[textKey]}${extra}</option>`;
+      const suffix = suffixKey ? ` (${x[suffixKey] ?? ''})` : '';
+      return `<option value="${x[valueKey]}">${x[textKey]}${suffix}</option>`;
     }).join('');
   }
 
   function addRow(type) {
     let html = '';
+
     if (type === 'trabajadores') {
-      html = `<div class="line-row">
+      html = `<div class="line-row line-row-3">
         <select class="tr-id"><option value="">Trabajador</option>${options(data.trabajadores, 'id', 'nombre')}</select>
         <input type="number" class="tr-horas" min="0" step="0.25" placeholder="Horas">
-        <input type="number" class="tr-coste" min="0" step="0.01" placeholder="Coste/h">
         <button type="button" class="btn-remove">×</button>
       </div>`;
       rowsTrab.insertAdjacentHTML('beforeend', html);
+      return;
     }
+
     if (type === 'materiales') {
-      html = `<div class="line-row">
+      html = `<div class="line-row line-row-3">
         <select class="mt-id"><option value="">Material</option>${options(data.materiales, 'id', 'nombre', 'unidad')}</select>
         <input type="number" class="mt-cantidad" min="0" step="0.01" placeholder="Cantidad">
-        <input type="number" class="mt-precio" min="0" step="0.01" placeholder="Precio ud.">
         <button type="button" class="btn-remove">×</button>
       </div>`;
       rowsMat.insertAdjacentHTML('beforeend', html);
+      return;
     }
-    if (type === 'maquinaria') {
-      html = `<div class="line-row">
-        <select class="mq-id"><option value="">Máquina</option>${options(data.maquinaria, 'id', 'nombre')}</select>
-        <input type="number" class="mq-horas" min="0" step="0.25" placeholder="Horas">
-        <input type="number" class="mq-coste" min="0" step="0.01" placeholder="Coste/h">
-        <button type="button" class="btn-remove">×</button>
-      </div>`;
-      rowsMaq.insertAdjacentHTML('beforeend', html);
-    }
+
+    html = `<div class="line-row line-row-3">
+      <select class="mq-id"><option value="">Máquina</option>${options(data.maquinaria, 'id', 'nombre')}</select>
+      <input type="number" class="mq-horas" min="0" step="0.25" placeholder="Horas">
+      <button type="button" class="btn-remove">×</button>
+    </div>`;
+    rowsMaq.insertAdjacentHTML('beforeend', html);
   }
 
-  document.querySelectorAll('[data-add-row]').forEach((btn) => {
-    btn.addEventListener('click', () => addRow(btn.dataset.addRow));
-  });
-
-  [rowsTrab, rowsMat, rowsMaq].forEach((box) => {
-    box.addEventListener('click', (e) => {
-      if (e.target.classList.contains('btn-remove')) {
-        e.target.closest('.line-row').remove();
-      }
+  function bindAddButtons() {
+    document.querySelectorAll('[data-add-row]').forEach((btn) => {
+      btn.addEventListener('click', () => addRow(btn.dataset.addRow));
     });
-  });
+  }
 
-  const proyecto = document.getElementById('proyecto_id');
-  const tarea = document.getElementById('tarea_id');
-  proyecto.addEventListener('change', () => {
-    const pid = proyecto.value;
-    Array.from(tarea.options).forEach((o, idx) => {
-      if (idx === 0) return;
-      o.hidden = o.dataset.proyecto !== pid;
+  function bindRemoveButtons() {
+    [rowsTrab, rowsMat, rowsMaq].forEach((box) => {
+      box.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-remove')) {
+          const row = e.target.closest('.line-row');
+          if (row) row.remove();
+        }
+      });
     });
-    tarea.value = '';
-  });
+  }
+
+  function bindTaskFilter() {
+    const proyecto = document.getElementById('proyecto_id');
+    const tarea = document.getElementById('tarea_id');
+    if (!proyecto || !tarea) return;
+
+    proyecto.addEventListener('change', () => {
+      const pid = proyecto.value;
+      Array.from(tarea.options).forEach((option, idx) => {
+        if (idx === 0) return;
+        option.hidden = option.dataset.proyecto !== pid;
+      });
+      tarea.value = '';
+    });
+  }
 
   function showAlert(msg, ok) {
     alertBox.textContent = msg;
@@ -77,47 +86,49 @@
     alertBox.classList.add(ok ? 'alert-ok' : 'alert-error');
   }
 
-  function collectRows() {
-    const trabajadores = Array.from(rowsTrab.querySelectorAll('.line-row')).map((r) => ({
-      trabajador_id: Number(r.querySelector('.tr-id').value || 0),
-      horas: Number(r.querySelector('.tr-horas').value || 0),
-      coste_hora_snapshot: Number(r.querySelector('.tr-coste').value || 0)
-    }));
+  function readRows() {
+    const trabajadores = Array.from(rowsTrab.querySelectorAll('.line-row')).map((row) => ({
+      trabajador_id: Number(row.querySelector('.tr-id').value || 0),
+      horas: Number(row.querySelector('.tr-horas').value || 0),
+    })).filter((row) => row.trabajador_id > 0 && row.horas > 0);
 
-    const materiales = Array.from(rowsMat.querySelectorAll('.line-row')).map((r) => ({
-      material_id: Number(r.querySelector('.mt-id').value || 0),
-      cantidad: Number(r.querySelector('.mt-cantidad').value || 0),
-      precio_unitario_snapshot: Number(r.querySelector('.mt-precio').value || 0)
-    }));
+    const materiales = Array.from(rowsMat.querySelectorAll('.line-row')).map((row) => ({
+      material_id: Number(row.querySelector('.mt-id').value || 0),
+      cantidad: Number(row.querySelector('.mt-cantidad').value || 0),
+    })).filter((row) => row.material_id > 0 && row.cantidad > 0);
 
-    const maquinaria = Array.from(rowsMaq.querySelectorAll('.line-row')).map((r) => ({
-      maquinaria_id: Number(r.querySelector('.mq-id').value || 0),
-      horas: Number(r.querySelector('.mq-horas').value || 0),
-      coste_hora_snapshot: Number(r.querySelector('.mq-coste').value || 0)
-    }));
+    const maquinaria = Array.from(rowsMaq.querySelectorAll('.line-row')).map((row) => ({
+      maquinaria_id: Number(row.querySelector('.mq-id').value || 0),
+      horas: Number(row.querySelector('.mq-horas').value || 0),
+    })).filter((row) => row.maquinaria_id > 0 && row.horas > 0);
 
     return { trabajadores, materiales, maquinaria };
   }
 
-  btnGuardar.addEventListener('click', async () => {
-    const fd = new FormData(form);
-    const rows = collectRows();
+  async function submitForm() {
+    const formData = new FormData(form);
+    const rows = readRows();
 
-    if (!fd.get('proyecto_id') || !fd.get('fecha')) {
-      showAlert('Proyecto y fecha son obligatorios.', false);
+    if (!formData.get('proyecto_id')) {
+      showAlert('Selecciona un proyecto.', false);
+      return;
+    }
+
+    if (!formData.get('fecha')) {
+      showAlert('La fecha es obligatoria.', false);
       return;
     }
 
     if (rows.trabajadores.length + rows.materiales.length + rows.maquinaria.length === 0) {
-      showAlert('Añade al menos un registro.', false);
+      showAlert('Añade al menos un registro con valores válidos.', false);
       return;
     }
 
     const payload = {
-      proyecto_id: fd.get('proyecto_id'),
-      fecha: fd.get('fecha'),
-      tarea_id: fd.get('tarea_id') || '',
-      notas: fd.get('notas') || '',
+      proyecto_id: formData.get('proyecto_id'),
+      fecha: formData.get('fecha'),
+      tarea_id: formData.get('tarea_id') || '',
+      notas: formData.get('notas') || '',
       trabajadores: rows.trabajadores,
       materiales: rows.materiales,
       maquinaria: rows.maquinaria,
@@ -127,29 +138,35 @@
     btnGuardar.textContent = 'Guardando...';
 
     try {
-      const res = await fetch('ajax/guardar_parte.php', {
+      const response = await fetch('ajax/guardar_parte.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        showAlert(json.message || 'Error al guardar.', false);
-      } else {
-        showAlert(json.message, true);
-        form.reset();
-        rowsTrab.innerHTML = '';
-        rowsMat.innerHTML = '';
-        rowsMaq.innerHTML = '';
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        showAlert(result.message || 'No se pudo guardar el parte.', false);
+        return;
       }
-    } catch (e) {
+
+      showAlert(result.message || 'Parte guardado correctamente.', true);
+      form.reset();
+      rowsTrab.innerHTML = '';
+      rowsMat.innerHTML = '';
+      rowsMaq.innerHTML = '';
+      addRow('trabajadores');
+    } catch (error) {
       showAlert('Error de red o servidor.', false);
     } finally {
       btnGuardar.disabled = false;
       btnGuardar.textContent = 'Guardar parte';
     }
-  });
+  }
 
+  btnGuardar.addEventListener('click', submitForm);
+  bindAddButtons();
+  bindRemoveButtons();
+  bindTaskFilter();
   addRow('trabajadores');
 })();

@@ -28,7 +28,7 @@ class ParteDiarioController
             $parteId = $this->model->create($validation['data'], $userId);
             return ['ok' => true, 'message' => 'Parte guardado correctamente.', 'parte_id' => $parteId];
         } catch (Throwable $e) {
-            return ['ok' => false, 'message' => 'No se pudo guardar el parte.'];
+            return ['ok' => false, 'message' => $e->getMessage() ?: 'No se pudo guardar el parte.'];
         }
     }
 
@@ -39,20 +39,23 @@ class ParteDiarioController
         $tareaId = (int)($input['tarea_id'] ?? 0);
         $notas = trim($input['notas'] ?? '');
 
-        if ($proyectoId <= 0 || $fecha === '') {
-            return ['ok' => false, 'message' => 'Proyecto y fecha son obligatorios.'];
+        if ($proyectoId <= 0) {
+            return ['ok' => false, 'message' => 'Selecciona un proyecto válido.'];
+        }
+
+        $date = DateTime::createFromFormat('Y-m-d', $fecha);
+        if (!$date || $date->format('Y-m-d') !== $fecha) {
+            return ['ok' => false, 'message' => 'Fecha inválida.'];
         }
 
         $trabajadores = [];
         foreach (($input['trabajadores'] ?? []) as $row) {
             $trabajadorId = (int)($row['trabajador_id'] ?? 0);
             $horas = (float)($row['horas'] ?? 0);
-            $coste = (float)($row['coste_hora_snapshot'] ?? 0);
             if ($trabajadorId > 0 && $horas > 0) {
                 $trabajadores[] = [
                     'trabajador_id' => $trabajadorId,
-                    'horas' => $horas,
-                    'coste_hora_snapshot' => max(0, $coste),
+                    'horas' => round($horas, 2),
                 ];
             }
         }
@@ -61,12 +64,10 @@ class ParteDiarioController
         foreach (($input['materiales'] ?? []) as $row) {
             $materialId = (int)($row['material_id'] ?? 0);
             $cantidad = (float)($row['cantidad'] ?? 0);
-            $precio = (float)($row['precio_unitario_snapshot'] ?? 0);
             if ($materialId > 0 && $cantidad > 0) {
                 $materiales[] = [
                     'material_id' => $materialId,
-                    'cantidad' => $cantidad,
-                    'precio_unitario_snapshot' => max(0, $precio),
+                    'cantidad' => round($cantidad, 2),
                 ];
             }
         }
@@ -75,18 +76,16 @@ class ParteDiarioController
         foreach (($input['maquinaria'] ?? []) as $row) {
             $maquinariaId = (int)($row['maquinaria_id'] ?? 0);
             $horas = (float)($row['horas'] ?? 0);
-            $coste = (float)($row['coste_hora_snapshot'] ?? 0);
             if ($maquinariaId > 0 && $horas > 0) {
                 $maquinaria[] = [
                     'maquinaria_id' => $maquinariaId,
-                    'horas' => $horas,
-                    'coste_hora_snapshot' => max(0, $coste),
+                    'horas' => round($horas, 2),
                 ];
             }
         }
 
         if (!$trabajadores && !$materiales && !$maquinaria) {
-            return ['ok' => false, 'message' => 'Añade al menos un registro (trabajador, material o maquinaria).'];
+            return ['ok' => false, 'message' => 'Añade al menos un trabajador, material o maquinaria con valores válidos.'];
         }
 
         return [

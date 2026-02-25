@@ -76,6 +76,7 @@ textarea { resize: vertical; }
 .card-block { border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
 .row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
 .line-row { display: grid; grid-template-columns: 1fr 86px 86px 44px; gap: 8px; margin-bottom: 8px; }
+.line-row-3 { grid-template-columns: 1fr 110px 44px; }
 .btn-remove { border: 1px solid #fecaca; background: #fff; color: #b91c1c; }
 
 .alert { padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid; }
