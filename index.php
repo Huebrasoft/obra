@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/session_middleware.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/HomeController.php';
+require_once __DIR__ . '/controllers/ParteDiarioController.php';
 
 $page = $_GET['page'] ?? 'dashboard';
 
@@ -17,8 +18,12 @@ requireLogin();
 
 switch ($page) {
     case 'dashboard':
-        $homeController = new HomeController();
-        $homeController->dashboard();
+        (new HomeController())->dashboard();
+        break;
+
+    case 'nuevo-parte':
+        requireRole(['admin', 'operario']);
+        (new ParteDiarioController())->createView();
         break;
 
     case 'usuarios':

@@ -30,26 +30,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Obra App</title>
+    <title>Login | HuebraSoft</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
-<main class="container auth-container">
-    <h1>Obra App</h1>
-    <p>Acceso interno</p>
+<body class="auth-page">
+<main class="auth-card">
+    <div class="brand"><span class="logo">H</span> HuebraSoft</div>
+    <h1>Acceso interno</h1>
 
     <?php if ($error !== ''): ?>
-        <div class="alert"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="alert alert-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
     <?php endif; ?>
 
-    <form method="post" class="card">
-        <label for="identifier">Usuario o email</label>
-        <input type="text" id="identifier" name="identifier" required>
+    <form method="post" class="stack">
+        <div>
+            <label for="identifier">Usuario o email</label>
+            <input type="text" id="identifier" name="identifier" required>
+        </div>
 
-        <label for="password">Contraseña</label>
-        <input type="password" id="password" name="password" required>
+        <div>
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" name="password" required>
+        </div>
 
-        <button type="submit">Entrar</button>
+        <button type="submit" class="btn-primary">Entrar</button>
     </form>
 </main>
 </body>
