@@ -4,9 +4,9 @@
     <div class="panel-head">
         <div>
             <p class="eyebrow">Parte diario</p>
-            <h1>Nuevo parte</h1>
+            <h1>📝 Nuevo parte diario</h1>
         </div>
-        <button type="button" class="btn-primary" id="btnGuardarParte">Guardar parte</button>
+        <button type="button" class="btn-primary" id="btnGuardarParte"><i data-lucide="save"></i>Guardar parte</button>
     </div>
 
     <div id="parteAlert" class="alert hidden"></div>
