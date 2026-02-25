@@ -104,7 +104,6 @@ function projectStatusBadge(string $estado): array {
                     <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Obras y Proyectos</h1>
                     <p class="text-slate-600 mt-1">Gestiona el estado y progreso de todas tus obras en un solo lugar.</p>
                 </div>
-
                 <button onclick="toggleModal('modalNuevaObra')" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md shadow-brand-500/20 transition-all flex items-center justify-center gap-2 transform hover:scale-[1.02] active:scale-95 whitespace-nowrap">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                     Nueva Obra
@@ -114,7 +113,7 @@ function projectStatusBadge(string $estado): array {
             <div class="flex flex-col md:flex-row gap-4 mb-8">
                 <div class="relative flex-1">
                     <i data-lucide="search" class="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5"></i>
-                    <input type="text" placeholder="Buscar por nombre, cliente o ubicación..." class="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm md:text-base shadow-sm">
+                    <input type="text" placeholder="Buscar por nombre, cliente o estado..." id="searchInput" class="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm md:text-base shadow-sm">
                 </div>
 
                 <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1 md:pb-0">
@@ -125,14 +124,14 @@ function projectStatusBadge(string $estado): array {
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="projectsGrid">
                 <?php if (!$projects): ?>
                     <div class="col-span-full bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">No hay obras todavía.</div>
                 <?php endif; ?>
 
                 <?php foreach ($projects as $project): ?>
                     <?php [$badgeClass, $dotClass] = projectStatusBadge($project['estado']); ?>
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full <?= $project['estado'] === 'Pausado' ? 'opacity-80' : '' ?>">
+                    <div class="project-card bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full <?= $project['estado'] === 'Pausado' ? 'opacity-80' : '' ?>" data-search="<?= htmlspecialchars(strtolower(($project['nombre'] ?? '') . ' ' . ($project['cliente_nombre'] ?? '') . ' ' . ($project['estado'] ?? '')), ENT_QUOTES, 'UTF-8') ?>">
                         <div class="p-5 flex-1">
                             <div class="flex justify-between items-start mb-3">
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border <?= $badgeClass ?>">
@@ -157,7 +156,6 @@ function projectStatusBadge(string $estado): array {
                             <?php else: ?>
                                 <div class="flex flex-col"><span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Horas Totales</span><span class="text-sm font-semibold text-slate-700"><?= (float)$project['horas_totales'] ?>h</span></div>
                             <?php endif; ?>
-
                             <button class="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">Ver detalles <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                         </div>
                     </div>
@@ -186,35 +184,49 @@ function projectStatusBadge(string $estado): array {
                 <button onclick="toggleModal('modalNuevaObra')" class="text-slate-400 hover:text-slate-700 bg-white rounded-full p-1 border border-slate-200 shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
 
-            <div class="p-6 space-y-4 overflow-y-auto">
+            <form id="formNuevaObra" class="p-6 space-y-4 overflow-y-auto">
+                <div id="obraAlert" class="hidden text-sm rounded-lg px-3 py-2"></div>
+
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Nombre de la Obra *</label>
-                    <input type="text" placeholder="Ej. Reforma Baños Planta 2" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                    <input type="text" name="nombre" required placeholder="Ej. Reforma Baños Planta 2" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
                 </div>
+
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Cliente Asociado *</label>
                     <div class="relative">
-                        <select class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 appearance-none bg-white">
-                            <option value="" disabled selected>Selecciona un cliente</option>
+                        <select name="cliente_id" id="cliente_id" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 appearance-none bg-white">
+                            <option value="">Selecciona un cliente</option>
                             <?php foreach ($clientes as $cliente): ?>
                                 <option value="<?= (int)$cliente['id'] ?>"><?= htmlspecialchars($cliente['nombre'], ENT_QUOTES, 'UTF-8') ?></option>
                             <?php endforeach; ?>
                         </select>
                         <i data-lucide="chevron-down" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none"></i>
                     </div>
+                    <label class="flex items-center gap-2 text-sm text-slate-600 mt-2">
+                        <input type="checkbox" id="crear_cliente_nuevo" class="rounded border-slate-300">
+                        Crear cliente nuevo si no existe
+                    </label>
                 </div>
+
+                <div id="bloque_cliente_nuevo" class="hidden">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Nombre del nuevo cliente *</label>
+                    <input type="text" name="cliente_nuevo_nombre" id="cliente_nuevo_nombre" placeholder="Ej. Cliente Nuevo S.L." class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Localización</label>
                     <div class="relative">
                         <i data-lucide="map-pin" class="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4"></i>
-                        <input type="text" placeholder="Dirección o población" class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                        <input type="text" name="ubicacion" placeholder="Dirección o población" class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
                     </div>
                 </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Estado</label>
                         <div class="relative">
-                            <select class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 appearance-none bg-white">
+                            <select name="estado" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 appearance-none bg-white">
                                 <option>Proximo</option>
                                 <option>En curso</option>
                                 <option>Pausado</option>
@@ -224,18 +236,19 @@ function projectStatusBadge(string $estado): array {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Fecha de Inicio</label>
-                        <input type="date" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                        <input type="date" name="fecha_inicio" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
                     </div>
                 </div>
+
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Descripción corta (Opcional)</label>
-                    <textarea rows="2" placeholder="Detalles o alcance del proyecto..." class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 resize-none"></textarea>
+                    <textarea rows="2" name="descripcion" placeholder="Detalles o alcance del proyecto..." class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 resize-none"></textarea>
                 </div>
-            </div>
+            </form>
 
             <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 sticky bottom-0">
                 <button onclick="toggleModal('modalNuevaObra')" class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-xl transition-colors">Cancelar</button>
-                <button class="px-5 py-2.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition-colors shadow-sm flex items-center gap-2">Crear Obra</button>
+                <button id="btnCrearObra" class="px-5 py-2.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition-colors shadow-sm flex items-center gap-2">Crear Obra</button>
             </div>
         </div>
     </div>
@@ -260,6 +273,91 @@ function projectStatusBadge(string $estado): array {
                 modalContent.classList.add('scale-95');
                 setTimeout(() => modal.classList.add('hidden'), 300);
             }
+        }
+
+        const checkboxClienteNuevo = document.getElementById('crear_cliente_nuevo');
+        const bloqueClienteNuevo = document.getElementById('bloque_cliente_nuevo');
+        const inputClienteNuevo = document.getElementById('cliente_nuevo_nombre');
+        const selectCliente = document.getElementById('cliente_id');
+
+        checkboxClienteNuevo.addEventListener('change', () => {
+            const checked = checkboxClienteNuevo.checked;
+            bloqueClienteNuevo.classList.toggle('hidden', !checked);
+            selectCliente.disabled = checked;
+            if (!checked) inputClienteNuevo.value = '';
+        });
+
+        function showObraAlert(msg, ok) {
+            const box = document.getElementById('obraAlert');
+            box.classList.remove('hidden');
+            box.textContent = msg;
+            box.className = ok
+                ? 'text-sm rounded-lg px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'text-sm rounded-lg px-3 py-2 bg-red-50 text-red-700 border border-red-200';
+        }
+
+        document.getElementById('btnCrearObra').addEventListener('click', async function () {
+            const form = document.getElementById('formNuevaObra');
+            const fd = new FormData(form);
+            const payload = {
+                nombre: fd.get('nombre') || '',
+                cliente_id: checkboxClienteNuevo.checked ? '' : (fd.get('cliente_id') || ''),
+                cliente_nuevo_nombre: checkboxClienteNuevo.checked ? (fd.get('cliente_nuevo_nombre') || '') : '',
+                ubicacion: fd.get('ubicacion') || '',
+                estado: fd.get('estado') || 'Proximo',
+                fecha_inicio: fd.get('fecha_inicio') || '',
+                descripcion: fd.get('descripcion') || ''
+            };
+
+            if (!payload.nombre.trim()) {
+                showObraAlert('El nombre de la obra es obligatorio.', false);
+                return;
+            }
+
+            if (!checkboxClienteNuevo.checked && !payload.cliente_id) {
+                showObraAlert('Debes seleccionar un cliente o activar cliente nuevo.', false);
+                return;
+            }
+
+            if (checkboxClienteNuevo.checked && !payload.cliente_nuevo_nombre.trim()) {
+                showObraAlert('Indica el nombre del nuevo cliente.', false);
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = 'Creando...';
+
+            try {
+                const res = await fetch('ajax/crear_obra.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+
+                if (!res.ok || !json.ok) {
+                    showObraAlert(json.message || 'No se pudo crear la obra.', false);
+                } else {
+                    showObraAlert('Obra creada correctamente. Recargando listado...', true);
+                    setTimeout(() => window.location.reload(), 700);
+                }
+            } catch (e) {
+                showObraAlert('Error de red o servidor.', false);
+            } finally {
+                this.disabled = false;
+                this.textContent = 'Crear Obra';
+            }
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                const term = this.value.trim().toLowerCase();
+                document.querySelectorAll('.project-card').forEach(card => {
+                    const hay = card.getAttribute('data-search') || '';
+                    card.style.display = hay.includes(term) ? '' : 'none';
+                });
+            });
         }
     </script>
 </body>
