@@ -7,13 +7,18 @@ class AuthController
     {
         $pdo = getPDO();
 
+        // Nota: con PDO MySQL nativo (emulate prepares = false),
+        // no se debe reutilizar el mismo placeholder nombrado dos veces.
         $sql = 'SELECT id, nombre, usuario, email, password_hash, rol, activo
                 FROM usuarios
-                WHERE email = :identifier OR usuario = :identifier
+                WHERE email = :email_identifier OR usuario = :user_identifier
                 LIMIT 1';
 
         $stmt = $pdo->prepare($sql);
-        $stmt->execute(['identifier' => $identifier]);
+        $stmt->execute([
+            'email_identifier' => $identifier,
+            'user_identifier' => $identifier,
+        ]);
         $user = $stmt->fetch();
 
         if (!$user || (int)$user['activo'] !== 1) {
