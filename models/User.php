@@ -3,6 +3,28 @@ require_once __DIR__ . '/BaseModel.php';
 
 class User extends BaseModel {
     private $columnsCache = null;
+    private $tableNameCache = null;
+    private $primaryKeyCache = null;
+
+    private function tableName() {
+        if ($this->tableNameCache !== null) {
+            return $this->tableNameCache;
+        }
+
+        $candidates = array('usuarios', 'users', 'usuario', 'tb_usuarios', 'tbl_usuarios');
+        foreach ($candidates as $table) {
+            $stmt = $this->db->prepare('SHOW TABLES LIKE ?');
+            $stmt->execute(array($table));
+            if ($stmt->fetchColumn()) {
+                $this->tableNameCache = $table;
+                return $this->tableNameCache;
+            }
+        }
+
+        // Fallback por compatibilidad con el esquema original
+        $this->tableNameCache = 'usuarios';
+        return $this->tableNameCache;
+    }
 
     private function getColumnsMeta() {
         if ($this->columnsCache !== null) {
@@ -10,7 +32,8 @@ class User extends BaseModel {
         }
 
         $meta = array();
-        $stmt = $this->db->query('SHOW COLUMNS FROM usuarios');
+        $table = $this->tableName();
+        $stmt = $this->db->query('SHOW COLUMNS FROM `' . $table . '`');
         foreach ($stmt->fetchAll() as $col) {
             $meta[] = $col;
         }
@@ -37,13 +60,29 @@ class User extends BaseModel {
         return $out;
     }
 
+    private function detectPrimaryKey() {
+        if ($this->primaryKeyCache !== null) {
+            return $this->primaryKeyCache;
+        }
+
+        foreach ($this->getColumnsMeta() as $col) {
+            if (isset($col['Key']) && $col['Key'] === 'PRI') {
+                $this->primaryKeyCache = $col['Field'];
+                return $this->primaryKeyCache;
+            }
+        }
+
+        $candidates = $this->existingColumns(array('id', 'user_id', 'usuario_id'));
+        $this->primaryKeyCache = !empty($candidates) ? $candidates[0] : 'id';
+        return $this->primaryKeyCache;
+    }
+
     private function detectLoginColumns() {
         $preferred = $this->existingColumns(array('username', 'usuario', 'email', 'user', 'login', 'nick', 'nombre', 'name'));
         if (!empty($preferred)) {
             return $preferred;
         }
 
-        // Fallback: cualquier columna de texto que pueda contener el login
         $detected = array();
         foreach ($this->getColumnsMeta() as $col) {
             $field = $col['Field'];
@@ -61,6 +100,7 @@ class User extends BaseModel {
             return null;
         }
 
+        $table = $this->tableName();
         $userCols = $this->detectLoginColumns();
         if (empty($userCols)) {
             return null;
@@ -69,11 +109,11 @@ class User extends BaseModel {
         $conditions = array();
         $params = array();
         foreach ($userCols as $col) {
-            $conditions[] = 'LOWER(TRIM(CAST(' . $col . ' AS CHAR))) = LOWER(?)';
+            $conditions[] = 'LOWER(TRIM(CAST(`' . $col . '` AS CHAR))) = LOWER(?)';
             $params[] = $username;
         }
 
-        $sql = 'SELECT * FROM usuarios WHERE (' . implode(' OR ', $conditions) . ') ORDER BY id ASC LIMIT 1';
+        $sql = 'SELECT * FROM `' . $table . '` WHERE (' . implode(' OR ', $conditions) . ') LIMIT 1';
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         $user = $stmt->fetch();
@@ -82,14 +122,14 @@ class User extends BaseModel {
             return $user;
         }
 
-        // Último fallback: búsqueda exacta sin lower/trim por si hay collation extraña
         $conditions = array();
         $params = array();
         foreach ($userCols as $col) {
-            $conditions[] = $col . ' = ?';
+            $conditions[] = '`' . $col . '` = ?';
             $params[] = $username;
         }
-        $sql = 'SELECT * FROM usuarios WHERE (' . implode(' OR ', $conditions) . ') ORDER BY id ASC LIMIT 1';
+
+        $sql = 'SELECT * FROM `' . $table . '` WHERE (' . implode(' OR ', $conditions) . ') LIMIT 1';
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         $user = $stmt->fetch();
@@ -105,7 +145,6 @@ class User extends BaseModel {
             }
         }
 
-        // Fallback: detectar cualquier campo de texto con nombre de contraseña
         foreach ($user as $key => $value) {
             $k = strtolower((string)$key);
             if (strpos($k, 'pass') !== false || strpos($k, 'clave') !== false || strpos($k, 'contra') !== false) {
@@ -118,7 +157,23 @@ class User extends BaseModel {
         return '';
     }
 
+    public function getUserId($user) {
+        $pk = $this->detectPrimaryKey();
+        if (isset($user[$pk])) {
+            return (int)$user[$pk];
+        }
+
+        foreach (array('id', 'user_id', 'usuario_id') as $k) {
+            if (isset($user[$k])) {
+                return (int)$user[$k];
+            }
+        }
+        return 0;
+    }
+
     public function updatePasswordHash($userId, $newHash) {
+        $table = $this->tableName();
+        $pk = $this->detectPrimaryKey();
         $passwordCols = $this->existingColumns(array('password_hash', 'password', 'clave', 'contrasena', 'passwd', 'pass', 'contrasenya'));
         if (empty($passwordCols)) {
             return false;
@@ -127,12 +182,12 @@ class User extends BaseModel {
 
         $updatedCols = $this->existingColumns(array('updated_at', 'modificado_en'));
         if (!empty($updatedCols)) {
-            $sql = 'UPDATE usuarios SET ' . $passwordCol . ' = ?, ' . $updatedCols[0] . ' = NOW() WHERE id = ? LIMIT 1';
+            $sql = 'UPDATE `' . $table . '` SET `' . $passwordCol . '` = ?, `' . $updatedCols[0] . '` = NOW() WHERE `' . $pk . '` = ? LIMIT 1';
             $stmt = $this->db->prepare($sql);
             return $stmt->execute(array($newHash, (int)$userId));
         }
 
-        $sql = 'UPDATE usuarios SET ' . $passwordCol . ' = ? WHERE id = ? LIMIT 1';
+        $sql = 'UPDATE `' . $table . '` SET `' . $passwordCol . '` = ? WHERE `' . $pk . '` = ? LIMIT 1';
         $stmt = $this->db->prepare($sql);
         return $stmt->execute(array($newHash, (int)$userId));
     }

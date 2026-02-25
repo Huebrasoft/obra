@@ -88,11 +88,11 @@ function loginUser($username, $password) {
 
     if ($needsUpgrade) {
         $newHash = password_hash($password, PASSWORD_DEFAULT);
-        $userModel->updatePasswordHash((int)$user['id'], $newHash);
+        $userModel->updatePasswordHash($userModel->getUserId($user), $newHash);
     }
 
     $_SESSION['user'] = array(
-        'id' => isset($user['id']) ? $user['id'] : 0,
+        'id' => $userModel->getUserId($user),
         'username' => isset($user['username']) ? $user['username'] : (isset($user['usuario']) ? $user['usuario'] : $username),
         'nombre' => isset($user['nombre']) ? $user['nombre'] : (isset($user['username']) ? $user['username'] : $username),
         'rol' => isset($user['rol']) ? $user['rol'] : 'operario',
