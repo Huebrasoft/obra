@@ -73,28 +73,34 @@ También puedes sobrescribir con variables de entorno:
 
 ## 4) Usuario y contraseña por defecto
 
-Para el primer acceso, crea un usuario admin inicial en MySQL.
+El esquema `database/schema.sql` ya deja creado un usuario inicial de prueba para entrar al sistema.
 
-### Opción recomendada (hash bcrypt generado por PHP)
-
-Genera hash para la contraseña por defecto `Admin1234`:
-
-```bash
-php -r "echo password_hash('Admin1234', PASSWORD_DEFAULT), PHP_EOL;"
-```
-
-Luego inserta el usuario (reemplaza `TU_HASH_AQUI`):
-
-```sql
-INSERT INTO usuarios (nombre, email, password_hash, rol, activo)
-VALUES ('Administrador', 'admin@obra.local', 'TU_HASH_AQUI', 'admin', 1);
-```
-
-Credenciales por defecto sugeridas:
+Credenciales iniciales:
+- Usuario: `admin`
 - Email: `admin@obra.local`
 - Contraseña: `Admin1234`
 
-> Cambia la contraseña después del primer inicio de sesión.
+El login acepta **usuario o email** indistintamente.
+
+> Recomendado: cambiar la contraseña justo después del primer inicio de sesión.
+
+### Si tu tabla `usuarios` ya existía sin columna `usuario`
+
+Ejecuta esta migración manual:
+
+```sql
+ALTER TABLE usuarios
+  ADD COLUMN usuario VARCHAR(60) NULL AFTER nombre;
+
+UPDATE usuarios
+SET usuario = CONCAT('user_', id)
+WHERE usuario IS NULL OR usuario = '';
+
+ALTER TABLE usuarios
+  MODIFY usuario VARCHAR(60) NOT NULL,
+  ADD UNIQUE KEY uq_usuarios_usuario (usuario);
+```
+
 
 ---
 

@@ -3,13 +3,17 @@ require_once __DIR__ . '/../config/db.php';
 
 class AuthController
 {
-    public function login(string $email, string $password): bool
+    public function login(string $identifier, string $password): bool
     {
         $pdo = getPDO();
 
-        $sql = 'SELECT id, nombre, email, password_hash, rol, activo FROM usuarios WHERE email = :email LIMIT 1';
+        $sql = 'SELECT id, nombre, usuario, email, password_hash, rol, activo
+                FROM usuarios
+                WHERE email = :identifier OR usuario = :identifier
+                LIMIT 1';
+
         $stmt = $pdo->prepare($sql);
-        $stmt->execute(['email' => $email]);
+        $stmt->execute(['identifier' => $identifier]);
         $user = $stmt->fetch();
 
         if (!$user || (int)$user['activo'] !== 1) {
@@ -23,6 +27,7 @@ class AuthController
         $_SESSION['user'] = [
             'id' => (int)$user['id'],
             'nombre' => $user['nombre'],
+            'usuario' => $user['usuario'],
             'email' => $user['email'],
             'rol' => $user['rol'],
         ];

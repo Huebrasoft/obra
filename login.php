@@ -10,14 +10,14 @@ if (isLoggedIn()) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
+    $identifier = trim($_POST['identifier'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if ($email === '' || $password === '') {
-        $error = 'Completa email y contraseña.';
+    if ($identifier === '' || $password === '') {
+        $error = 'Completa usuario/email y contraseña.';
     } else {
         $authController = new AuthController();
-        if ($authController->login($email, $password)) {
+        if ($authController->login($identifier, $password)) {
             header('Location: index.php');
             exit;
         }
@@ -43,8 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <form method="post" class="card">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required>
+        <label for="identifier">Usuario o email</label>
+        <input type="text" id="identifier" name="identifier" required>
 
         <label for="password">Contraseña</label>
         <input type="password" id="password" name="password" required>

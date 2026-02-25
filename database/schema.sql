@@ -3,11 +3,11 @@
 -- Stack: MySQL 8+
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS obra_app
+CREATE DATABASE IF NOT EXISTS huebraso_obra_app
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE obra_app;
+USE huebraso_obra_app;
 
 -- =========================
 -- Tabla: usuarios
@@ -15,12 +15,14 @@ USE obra_app;
 CREATE TABLE usuarios (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(120) NOT NULL,
+  usuario VARCHAR(60) NOT NULL,
   email VARCHAR(150) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   rol ENUM('admin', 'operario') NOT NULL DEFAULT 'operario',
   activo TINYINT(1) NOT NULL DEFAULT 1,
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_usuarios_usuario (usuario),
   UNIQUE KEY uq_usuarios_email (email)
 ) ENGINE=InnoDB;
 
@@ -230,3 +232,9 @@ CREATE TABLE parte_maquinaria (
     ON UPDATE CASCADE
     ON DELETE RESTRICT
 ) ENGINE=InnoDB;
+
+
+-- Usuario inicial para primer acceso
+-- Usuario: admin | Email: admin@obra.local | Contraseña: Admin1234
+INSERT INTO usuarios (nombre, usuario, email, password_hash, rol, activo)
+VALUES ('Administrador', 'admin', 'admin@obra.local', '$2y$12$FBGuyPwC/xVqdmG3bdLYq.GXMivp16IRmtwPiXzutc1EcCkRELHGe', 'admin', 1);
