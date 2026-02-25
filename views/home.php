@@ -27,16 +27,26 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .glass-nav {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid #f1f5f9;
-        }
+        .glass-nav { background: rgba(255,255,255,.9); backdrop-filter: blur(10px); border-top: 1px solid #f1f5f9; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased flex h-screen overflow-hidden">
+<?php
+$userName = $_SESSION['user']['nombre'] ?? 'Usuario';
+$userRole = $_SESSION['user']['rol'] ?? 'operario';
+$metrics = $data['metrics'] ?? [];
+$projects = $data['projects'] ?? [];
+$clientes = $data['clientes'] ?? [];
+
+function projectStatusBadge(string $estado): array {
+    if ($estado === 'En curso') return ['bg-emerald-50 text-emerald-700 border-emerald-200', 'bg-emerald-500'];
+    if ($estado === 'Proximo') return ['bg-blue-50 text-blue-700 border-blue-200', 'bg-blue-500'];
+    if ($estado === 'Pausado') return ['bg-amber-50 text-amber-700 border-amber-200', 'bg-amber-500'];
+    return ['bg-slate-50 text-slate-700 border-slate-200', 'bg-slate-500'];
+}
+?>
 
     <aside class="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full">
         <div class="p-6 flex items-center gap-3">
@@ -63,21 +73,23 @@
             <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
                 <i data-lucide="users-round" class="w-5 h-5"></i> Clientes
             </a>
+            <a href="index.php?page=logout" class="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
+                <i data-lucide="log-out" class="w-5 h-5"></i> Salir
+            </a>
         </nav>
 
         <div class="p-4 border-t border-slate-200">
             <div class="flex items-center gap-3">
                 <img src="https://i.pravatar.cc/150?img=11" alt="Usuario" class="w-10 h-10 rounded-full border border-slate-200">
                 <div>
-                    <p class="text-sm font-semibold text-slate-900">Carlos Encargado</p>
-                    <p class="text-xs text-slate-500">Administrador</p>
+                    <p class="text-sm font-semibold text-slate-900"><?= htmlspecialchars($userName, ENT_QUOTES, 'UTF-8') ?></p>
+                    <p class="text-xs text-slate-500"><?= htmlspecialchars(ucfirst($userRole), ENT_QUOTES, 'UTF-8') ?></p>
                 </div>
             </div>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-full overflow-y-auto relative pb-20 md:pb-0">
-
         <header class="md:hidden flex items-center justify-between p-5 bg-white border-b border-slate-200 sticky top-0 z-10">
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-md bg-brand-600 flex items-center justify-center text-white font-bold text-lg">H</div>
@@ -87,7 +99,6 @@
         </header>
 
         <div class="p-5 md:p-8 max-w-6xl mx-auto w-full">
-
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
                     <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Obras y Proyectos</h1>
@@ -108,92 +119,49 @@
 
                 <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1 md:pb-0">
                     <button class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium whitespace-nowrap shadow-sm">Todas</button>
-                    <button class="px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg text-sm font-medium whitespace-nowrap shadow-sm transition-colors">En curso <span class="ml-1 bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md text-xs">4</span></button>
-                    <button class="px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg text-sm font-medium whitespace-nowrap shadow-sm transition-colors">Próximas <span class="ml-1 bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md text-xs">2</span></button>
-                    <button class="px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg text-sm font-medium whitespace-nowrap shadow-sm transition-colors">Pausadas <span class="ml-1 bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md text-xs">1</span></button>
+                    <button class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium whitespace-nowrap shadow-sm">En curso <span class="ml-1 bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md text-xs"><?= (int)($metrics['en_curso'] ?? 0) ?></span></button>
+                    <button class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium whitespace-nowrap shadow-sm">Próximas <span class="ml-1 bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md text-xs"><?= (int)($metrics['proximas'] ?? 0) ?></span></button>
+                    <button class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium whitespace-nowrap shadow-sm">Pausadas <span class="ml-1 bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md text-xs"><?= (int)($metrics['pausadas'] ?? 0) ?></span></button>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-                    <div class="p-5 flex-1">
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> En curso
-                            </span>
-                            <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
-                        </div>
-                        <h3 class="font-bold text-lg text-slate-900 leading-tight mb-2">Reforma Integral Nave Industrial</h3>
-                        <div class="space-y-2 mt-4">
-                            <div class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="user" class="w-4 h-4 text-slate-400"></i><span>Acero S.A.</span></div>
-                            <div class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i><span class="truncate">Polígono Los Villares, Salamanca</span></div>
-                        </div>
-                    </div>
-                    <div class="px-5 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex items-center justify-between">
-                        <div class="flex items-center gap-4"><div class="flex flex-col"><span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Horas Totales</span><span class="text-sm font-semibold text-slate-700">145h</span></div></div>
-                        <button class="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">Ver detalles <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
+                <?php if (!$projects): ?>
+                    <div class="col-span-full bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">No hay obras todavía.</div>
+                <?php endif; ?>
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-                    <div class="p-5 flex-1">
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> En curso
-                            </span>
-                            <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
-                        </div>
-                        <h3 class="font-bold text-lg text-slate-900 leading-tight mb-2">Cimentación Vivienda Unifamiliar</h3>
-                        <div class="space-y-2 mt-4">
-                            <div class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="user" class="w-4 h-4 text-slate-400"></i><span>Familia Pérez López</span></div>
-                            <div class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i><span class="truncate">Carbajosa de la Sagrada</span></div>
-                        </div>
-                    </div>
-                    <div class="px-5 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex items-center justify-between">
-                        <div class="flex items-center gap-4"><div class="flex flex-col"><span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Horas Totales</span><span class="text-sm font-semibold text-slate-700">82h</span></div></div>
-                        <button class="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">Ver detalles <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
+                <?php foreach ($projects as $project): ?>
+                    <?php [$badgeClass, $dotClass] = projectStatusBadge($project['estado']); ?>
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full <?= $project['estado'] === 'Pausado' ? 'opacity-80' : '' ?>">
+                        <div class="p-5 flex-1">
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border <?= $badgeClass ?>">
+                                    <span class="w-1.5 h-1.5 rounded-full <?= $dotClass ?>"></span> <?= htmlspecialchars($project['estado'], ENT_QUOTES, 'UTF-8') ?>
+                                </span>
+                                <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                            </div>
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-                    <div class="p-5 flex-1">
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Próxima
-                            </span>
-                            <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
-                        </div>
-                        <h3 class="font-bold text-lg text-slate-900 leading-tight mb-2">Renovación Fachada Edificio</h3>
-                        <div class="space-y-2 mt-4">
-                            <div class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="user" class="w-4 h-4 text-slate-400"></i><span>Comunidad Propietarios Centro</span></div>
-                            <div class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i><span class="truncate">Santa Marta de Tormes</span></div>
-                        </div>
-                    </div>
-                    <div class="px-5 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-sm text-slate-500"><i data-lucide="calendar" class="w-4 h-4"></i> Inicio: 15 Nov</div>
-                        <button class="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">Ver detalles <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
+                            <h3 class="font-bold text-lg text-slate-900 leading-tight mb-2"><?= htmlspecialchars($project['nombre'], ENT_QUOTES, 'UTF-8') ?></h3>
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full opacity-80">
-                    <div class="p-5 flex-1">
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pausada
-                            </span>
-                            <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                            <div class="space-y-2 mt-4">
+                                <div class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="user" class="w-4 h-4 text-slate-400"></i><span><?= htmlspecialchars($project['cliente_nombre'] ?? 'Sin cliente', ENT_QUOTES, 'UTF-8') ?></span></div>
+                                <div class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i><span class="truncate">Ubicación no definida</span></div>
+                            </div>
                         </div>
-                        <h3 class="font-bold text-lg text-slate-900 leading-tight mb-2">Adecuación Local Comercial</h3>
-                        <div class="space-y-2 mt-4">
-                            <div class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="user" class="w-4 h-4 text-slate-400"></i><span>Boutique Moda S.L.</span></div>
-                            <div class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i><span class="truncate">Plaza Mayor (Entornos)</span></div>
+
+                        <div class="px-5 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex items-center justify-between">
+                            <?php if ($project['estado'] === 'Proximo' && !empty($project['fecha_inicio'])): ?>
+                                <div class="flex items-center gap-2 text-sm text-slate-500"><i data-lucide="calendar" class="w-4 h-4"></i> Inicio: <?= htmlspecialchars(date('d M', strtotime($project['fecha_inicio'])), ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php elseif ($project['estado'] === 'Pausado'): ?>
+                                <div class="flex flex-col"><span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Motivo</span><span class="text-sm font-medium text-slate-600">Esperando Materiales</span></div>
+                            <?php else: ?>
+                                <div class="flex flex-col"><span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Horas Totales</span><span class="text-sm font-semibold text-slate-700"><?= (float)$project['horas_totales'] ?>h</span></div>
+                            <?php endif; ?>
+
+                            <button class="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">Ver detalles <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                         </div>
                     </div>
-                    <div class="px-5 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex items-center justify-between">
-                        <div class="flex flex-col"><span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Motivo</span><span class="text-sm font-medium text-slate-600">Esperando Materiales</span></div>
-                        <button class="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">Ver detalles <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
+                <?php endforeach; ?>
             </div>
 
             <div class="mt-8 text-center">
@@ -228,9 +196,9 @@
                     <div class="relative">
                         <select class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 appearance-none bg-white">
                             <option value="" disabled selected>Selecciona un cliente</option>
-                            <option>Acero S.A.</option>
-                            <option>Familia Pérez López</option>
-                            <option>Comunidad Propietarios Centro</option>
+                            <?php foreach ($clientes as $cliente): ?>
+                                <option value="<?= (int)$cliente['id'] ?>"><?= htmlspecialchars($cliente['nombre'], ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
                         </select>
                         <i data-lucide="chevron-down" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none"></i>
                     </div>
@@ -247,8 +215,9 @@
                         <label class="block text-sm font-medium text-slate-700 mb-1">Estado</label>
                         <div class="relative">
                             <select class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-slate-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 appearance-none bg-white">
-                                <option>Próximo</option>
+                                <option>Proximo</option>
                                 <option>En curso</option>
+                                <option>Pausado</option>
                             </select>
                             <i data-lucide="chevron-down" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none"></i>
                         </div>
@@ -273,13 +242,11 @@
 
     <script>
         lucide.createIcons();
-
         let isModalOpen = false;
 
         function toggleModal(modalId) {
             const modal = document.getElementById(modalId);
             const modalContent = modal.querySelector('#modalContent');
-
             isModalOpen = !isModalOpen;
 
             if (isModalOpen) {
@@ -291,9 +258,7 @@
             } else {
                 modal.classList.add('opacity-0');
                 modalContent.classList.add('scale-95');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                }, 300);
+                setTimeout(() => modal.classList.add('hidden'), 300);
             }
         }
     </script>
