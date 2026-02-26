@@ -1,0 +1,14 @@
+/* Archivo generado para producción. Recompilar con: npm run build:css */
+:root{--mavisal-blue:#0f172a;--mavisal-dark:#020617;--mavisal-orange:#f97316;--mavisal-orangeHover:#ea580c;--mavisal-light:#f8fafc}
+body{margin:0;font-family:Inter,sans-serif;background:var(--mavisal-light);color:#374151}
+.font-heading{font-family:Montserrat,sans-serif}
+.bg-mavisal-blue{background-color:var(--mavisal-blue)}
+.bg-mavisal-dark{background-color:var(--mavisal-dark)}
+.bg-mavisal-light{background-color:var(--mavisal-light)}
+.text-mavisal-blue{color:var(--mavisal-blue)}
+.text-mavisal-orange{color:var(--mavisal-orange)}
+.bg-mavisal-orange{background-color:var(--mavisal-orange)}
+.hover\:bg-mavisal-orangeHover:hover{background-color:var(--mavisal-orangeHover)}
+.card-hover{transition:all .3s ease}.card-hover:hover{transform:translateY(-5px);box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 10px 10px -5px rgba(0,0,0,.04)}
+.portfolio-overlay{background:linear-gradient(to top,rgba(15,23,42,.9),rgba(15,23,42,.2))}
+.hidden{display:none}

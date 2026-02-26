@@ -1,0 +1,10 @@
+{
+  "name": "mavisal-theme",
+  "private": true,
+  "devDependencies": {
+    "tailwindcss": "^3.4.13"
+  },
+  "scripts": {
+    "build:css": "tailwindcss -i ./assets/css/tailwind.css -o ./assets/css/main.css --minify"
+  }
+}

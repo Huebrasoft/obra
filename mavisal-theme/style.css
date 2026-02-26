@@ -1,0 +1,18 @@
+/*
+Theme Name: MaViSal Theme
+Theme URI: https://example.com/mavisal-theme
+Author: Codex
+Description: Tema WordPress basado en el diseño HTML original de Construcciones MaViSal.
+Version: 1.0.0
+Requires at least: 6.0
+Tested up to: 6.5
+Requires PHP: 7.4
+Text Domain: mavisal-theme
+*/
+
+/*
+ * Tailwind de producción se carga desde /assets/css/main.css.
+ * Compilación recomendada:
+ * 1) npm install
+ * 2) npx tailwindcss -i ./assets/css/tailwind.css -o ./assets/css/main.css --minify
+ */
